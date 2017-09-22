@@ -2,9 +2,9 @@ FROM openjdk:alpine
 
 WORKDIR /java-app
 
-COPY /target/java-app.jar .
+COPY /target/bus-container.jar .
 
 ENTRYPOINT ["/usr/bin/java"]
 
-CMD ["-jar", "java-app.jar"]
+CMD ["-jar", "bus-container.jar"]
 
