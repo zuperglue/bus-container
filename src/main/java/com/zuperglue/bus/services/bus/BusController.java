@@ -22,4 +22,11 @@ public class BusController {
         return "BUS....";
     }
 
+    @RequestMapping(value = "/message", method = RequestMethod.POST)
+    String message() {
+        System.out.println("Got message...");
+        return "Got message...";
+    }
+
+
 }
