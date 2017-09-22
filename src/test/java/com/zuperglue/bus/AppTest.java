@@ -1,4 +1,4 @@
-package com.zuperglue;
+package com.zuperglue.bus;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
