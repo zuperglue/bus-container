@@ -1,4 +1,4 @@
-package com.zuperglue;
+package com.zuperglue.bus;
 
 import java.io.IOError;
 import java.io.IOException;

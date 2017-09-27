@@ -1,10 +1,12 @@
 FROM openjdk:alpine
 
-WORKDIR /java-app
+WORKDIR /bus-container
 
-COPY /target/java-app.jar .
+COPY /target/bus-container.jar .
+
+ENV logging.pattern.console="%-5level [%-24thread{24}] %-45logger{45} : %msg%n"
 
 ENTRYPOINT ["/usr/bin/java"]
 
-CMD ["-jar", "java-app.jar"]
+CMD ["-jar", "bus-container.jar"]
 
