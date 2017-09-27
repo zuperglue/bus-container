@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.EC2ContainerCredentialsProviderWrapper;
 import com.amazonaws.services.kinesis.AmazonKinesis;
 import com.amazonaws.services.kinesis.AmazonKinesisClientBuilder;
 import com.amazonaws.services.kinesis.clientlibrary.interfaces.v2.IRecordProcessor;
@@ -75,6 +76,11 @@ public class Kinesis implements ShutdownHandler.Aware {
         // Ensure the JVM will refresh the cached IP values of AWS resources (e.g. service endpoints).
         java.security.Security.setProperty("networkaddress.cache.ttl", "60");
         credentialsProvider = new DefaultAWSCredentialsProviderChain();
+        LOG.info("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI: "+ System.getenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"));
+        LOG.info("AWS_CONTAINER_CREDENTIALS_FULL_URI: "+ System.getenv("AWS_CONTAINER_CREDENTIALS_FULL_URI"));
+
+        //credentialsProvider = new EC2ContainerCredentialsProviderWrapper();
+
         recordProcessorFactory = new RecordProcessorFactory(charsetName);
         workers = new ConcurrentHashMap<>();
 
@@ -98,7 +104,7 @@ public class Kinesis implements ShutdownHandler.Aware {
         return result;
     }
 
-    public void putMessage(String streamName, String message) throws AmazonClientException{
+    public void putMessage(String streamName, String message) throws AmazonClientException {
         LOG.info("Put Message: " + message);
         if (streamName == null || !streams.contains(streamName)){
             throw new AmazonClientException("Unknown stream name: "+ ((streamName!=null)?streamName : "NULL"));
@@ -121,7 +127,7 @@ public class Kinesis implements ShutdownHandler.Aware {
         putThreadPool.submit(() -> {
             LOG.debug("Submit Message: " + message);
             try {
-                putMessage(streamName,message);
+                putMessage(streamName, message);
             } catch (AmazonClientException ex) {
                 LOG.error("Error sending record to Amazon Kinesis." + ex);
             }
@@ -139,6 +145,7 @@ public class Kinesis implements ShutdownHandler.Aware {
         }
         String workerName = getWorkerName(streamName,appName);
         if (!workers.containsKey(workerName)) {
+            workers.put(workerName, new WorkerHolder(streamName,appName,null,null));
 
             workerThreadPool.submit(() -> {
 
@@ -186,7 +193,7 @@ public class Kinesis implements ShutdownHandler.Aware {
             });
 
         } else {
-            LOG.debug("Worker already started: " + workerName);
+            LOG.info("Worker already started: " + workerName);
         }
     }
 
@@ -194,13 +201,15 @@ public class Kinesis implements ShutdownHandler.Aware {
         if (workers.containsKey(workerName)) {
             WorkerHolder holder = workers.get(workerName);
             Worker worker = holder.worker;
-            Future<Boolean> result = worker.startGracefulShutdown();
-            try {
-                LOG.info("Stop Worker " + workerName + " result: " + result.get());
-            } catch (InterruptedException e) {
-                LOG.error("Stop Worker " + workerName + " interrupted");
-            } catch (ExecutionException e) {
-                LOG.error("Stop Worker " + workerName + " exception: " + e.getMessage());
+            if (worker != null) {
+                Future<Boolean> result = worker.startGracefulShutdown();
+                try {
+                    LOG.info("Stop Worker " + workerName + " result: " + result.get());
+                } catch (InterruptedException e) {
+                    LOG.error("Stop Worker " + workerName + " interrupted");
+                } catch (ExecutionException e) {
+                    LOG.error("Stop Worker " + workerName + " exception: " + e.getMessage());
+                }
             }
             workers.remove(workerName);
         } else {
@@ -237,7 +246,9 @@ public class Kinesis implements ShutdownHandler.Aware {
         for (Map.Entry<String, WorkerHolder> entry : workers.entrySet()) {
             String workerName = entry.getKey();
             WorkerHolder holder = entry.getValue();
-            shutDownResult.put(workerName, holder.worker.startGracefulShutdown());
+            if (holder.worker != null) {
+                shutDownResult.put(workerName, holder.worker.startGracefulShutdown());
+            }
         }
         // Get results
         for (Map.Entry<String, Future<Boolean>> entry : shutDownResult.entrySet()) {

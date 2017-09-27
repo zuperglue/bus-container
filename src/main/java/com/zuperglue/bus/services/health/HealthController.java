@@ -46,8 +46,9 @@ public class HealthController {
     @RequestMapping(value = "/health", method = RequestMethod.GET)
     Health health() {
 
-        threadPool.submitTask(() -> {
+
             /*
+             threadPool.submitTask(() -> {
             LOG.info("submiting health task ");
             String submitUrl = "http://localhost:" + port + "/bus/subscribe/" + App.NAME;
             String callbackUrl = "http://localhost:" + port + "/bus/message";
@@ -61,14 +62,22 @@ public class HealthController {
                 e.printStackTrace();
             }
             LOG.info("Health task done...");
-            */
-            try {
-                kinesis.startWorker("test-stream", "bus");
+                        try {
+                //kinesis.startWorker("test-stream", "bus");
             } catch (Exception e){
                 LOG.error("Error starting Kinesis worker bus",e);
             }
         });
-        return new Health("Okiee dokie - 1");
+            */
+        if (healthCallCount == 0) {
+            try {
+                kinesis.startWorker("zg-dev", "bus");
+            } catch (Exception e) {
+                LOG.error("Error starting Kinesis worker bus", e);
+            }
+        }
+        //LOG.info("Health OK");
+        return new Health("Okiee dokie - 7");
     }
 
 }
