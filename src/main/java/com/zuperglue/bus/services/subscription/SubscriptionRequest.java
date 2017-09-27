@@ -7,16 +7,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Subscription {
+public class SubscriptionRequest {
     String callback;
 
-    public Subscription(){
-    }
-
-    public Subscription(String callback){
+    public SubscriptionRequest(){}
+    public SubscriptionRequest(String callback){
         this.callback = callback;
     }
-
     public String getCallback() {
         return callback;
     }

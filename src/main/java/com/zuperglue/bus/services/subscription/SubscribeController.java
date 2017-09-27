@@ -2,6 +2,8 @@ package com.zuperglue.bus.services.subscription;
 
 import java.io.IOException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -9,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -20,16 +21,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @RequestMapping( "${CONTAINER_PATH}subscribe" )
 public class SubscribeController {
 
+    private Log LOG = LogFactory.getLog(SubscribeController.class);
+
     @Autowired
     SubscriptionService subscriptionService;
 
     @RequestMapping(value = "/{service}", method = RequestMethod.POST)
     String subscribe(@PathVariable String service, @RequestBody String payload) throws IOException {
-        System.out.println("Subscriber payload: "+payload);
+        LOG.info("Subscriber payload: "+payload);
 
         ObjectMapper mapper = new ObjectMapper();
-        Subscription subscription = mapper.readValue(payload, Subscription.class);
-        subscriptionService.subscribe(service,subscription);
+        SubscriptionRequest subscriptionReq = mapper.readValue(payload, SubscriptionRequest.class);
+        subscriptionService.subscribe(service,subscriptionReq);
         return "Subscribe to "+ service;
     }
 

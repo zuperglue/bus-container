@@ -1,8 +1,8 @@
 package com.zuperglue.bus.services.resources;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
@@ -12,14 +12,14 @@ import org.springframework.web.client.RestTemplate;
  * Created by zuperglue on 2017-09-22.
  */
 @Component
-public class ResourceManager {
+public class HttpPool implements ShutdownHandler.Aware {
 
-    private static final ExecutorService executor = Executors.newFixedThreadPool(10);
+    private Log LOG = LogFactory.getLog(HttpPool.class);
 
-    public ResourceManager(){}
+    //TODO: Use a real http connection pool
 
-    public void submitTask(Runnable task){
-        executor.submit(task);
+    public HttpPool(@Autowired ShutdownHandler shutdownHandler){
+        shutdownHandler.notifyMeAtShutdown("HttpPool", this, ShutdownHandler.Priority.LAST);
     }
 
     public String post(String url, String message){
@@ -30,4 +30,8 @@ public class ResourceManager {
         return restTemplate.postForObject(url, httpEntity, String.class);
     }
 
+    @Override
+    public void shutdownNotification() {
+        LOG.info("HttpPool shutdown");
+    }
 }
