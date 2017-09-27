@@ -69,12 +69,10 @@ public class HealthController {
             }
         });
             */
-        if (healthCallCount == 0) {
-            try {
-                kinesis.startWorker("zg-dev", "bus");
-            } catch (Exception e) {
-                LOG.error("Error starting Kinesis worker bus", e);
-            }
+        try {
+            kinesis.startWorker("zg-dev", "bus");
+        } catch (Exception e) {
+            LOG.error("Error starting Kinesis worker bus", e);
         }
         //LOG.info("Health OK");
         return new Health("Okiee dokie - 7");
